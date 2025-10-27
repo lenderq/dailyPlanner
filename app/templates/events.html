@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+{% block title %}Мои события{% endblock %}
+
+{% block content %}
+<h2>Мои события</h2>
+
+<a href="{{ url_for('main.add_event') }}">Добавить новое событие</a>
+
+{% if events %}
+  <ul>
+    {% for event in events %}
+      <li style="color: {{ event.color if event.color else 'black' }}">
+        <strong>{{ event.date.strftime('%Y-%m-%d') }}{% if event.time %} {{ event.time.strftime('%H:%M') }}{% endif %}:</strong>
+        {{ event.title }} 
+        - <a href="{{ url_for('main.edit_event', event_id=event.id) }}">Редактировать</a> | 
+        <form action="{{ url_for('main.delete_event', event_id=event.id) }}" method="post" style="display:inline">
+          <button type="submit" onclick="return confirm('Удалить это событие?')">Удалить</button>
+        </form>
+      </li>
+    {% endfor %}
+  </ul>
+{% else %}
+  <p>Событий пока нет.</p>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,110 @@
+{% extends "base.html" %}
+{% block title %}Главная{% endblock %}
+
+{% block content %}
+  <h2>Привет, {{ current_user.username }}!</h2>
+
+  <div id="calendar"></div>
+
+  <link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.css" rel="stylesheet" />
+  <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.js"></script>
+
+  <style>
+    #calendar {
+      max-width: 900px;
+      margin: 40px auto;
+    }
+
+    .color-stripes {
+      position: absolute;
+      bottom: 2px;
+      left: 2px;
+      right: 2px;
+      height: 6px;
+      display: flex;
+      gap: 2px;
+      z-index: 10;
+    }
+
+    .color-stripes > div {
+      flex: 1;
+      border-radius: 2px;
+    }
+  </style>
+
+
+
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      fetch('/api/events')
+        .then(res => res.json())
+        .then(events => {
+          const dateColorsMap = {};
+          events.forEach(e => {
+            const date = e.start.slice(0, 10);
+            if (!dateColorsMap[date]) dateColorsMap[date] = new Set();
+            if (e.color) dateColorsMap[date].add(e.color);
+          });
+
+          for (let d in dateColorsMap) {
+            dateColorsMap[d] = Array.from(dateColorsMap[d]);
+          }
+
+          const calendarEl = document.getElementById('calendar');
+          const calendar = new FullCalendar.Calendar(calendarEl, {
+            initialView: 'dayGridMonth',
+            locale: 'ru',
+            events: events,
+            headerToolbar: {
+              left: 'prev,next today',
+              center: 'title',
+              right: 'dayGridMonth,timeGridWeek,timeGridDay'
+            },
+            dateClick: info => window.location.href = '/event/add?date=' + info.dateStr,
+            eventClick: info => window.location.href = '/event/' + info.event.id + '/edit',
+            dayCellDidMount: function(info) {
+              const dateStr = info.date.getFullYear() + '-' + String(info.date.getMonth() + 1).padStart(2, '0') + '-' + String(info.date.getDate()).padStart(2, '0');
+              const colors = dateColorsMap[dateStr];
+              if (colors && colors.length > 0) {
+                const stripes = document.createElement('div');
+                stripes.classList.add('color-stripes');
+                colors.forEach(color => {
+                  const stripe = document.createElement('div');
+                  stripe.style.backgroundColor = color;
+                  stripes.appendChild(stripe);
+                });
+
+                info.el.style.position = 'relative';
+                info.el.appendChild(stripes);
+              }
+            }
+
+          });
+          calendar.render();
+        });
+
+      const shownReminders = new Set();
+
+      function checkReminders() {
+        fetch('/api/reminders')
+          .then(res => res.json())
+          .then(reminders => {
+            reminders.forEach(r => {
+              if (!shownReminders.has(r.id)) {
+                alert(`Напоминание: ${r.title} — ${new Date(r.reminder).toLocaleString()}`);
+                shownReminders.add(r.id);
+
+                fetch(`/api/reminders/${r.id}/seen`, {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' }
+                });
+              }
+            });
+          });
+      }
+
+      checkReminders();
+      setInterval(checkReminders, 30000);
+    });
+  </script>
+{% endblock %}

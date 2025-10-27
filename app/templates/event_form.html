@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+{% block title %}{{ title }}{% endblock %}
+
+{% block content %}
+<h2>{{ title }}</h2>
+<form method="post">
+  {{ form.hidden_tag() }}
+
+  <p>
+    {{ form.title.label }}<br>
+    {{ form.title(size=40) }}
+  </p>
+
+  <p>
+    {{ form.description.label }}<br>
+    {{ form.description(rows=4, cols=40) }}
+  </p>
+
+  <p>
+    {{ form.date.label }}<br>
+    {{ form.date() }}
+  </p>
+
+  <p>
+    {{ form.time.label }}<br>
+    {{ form.time() }}
+  </p>
+
+  <p>
+  {{ form.reminder.label }}<br>
+  {{ form.reminder() }}
+  </p>
+
+  <p>
+    {{ form.color.label }}<br>
+    {{ form.color() }}
+  </p>
+
+  <p>{{ form.submit() }}</p>
+</form>
+
+<a href="{{ url_for('main.events') }}">Вернуться к списку событий</a>
+{% endblock %}
